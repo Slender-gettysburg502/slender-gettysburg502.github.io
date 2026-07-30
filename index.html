@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>تقرير زيارة مدير تشغيل المصرية جروب لإدارة المشروعات</title>
+<title>تقرير زيارة - طقس مباشر</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;font-family:'Cairo',system-ui}
@@ -29,8 +29,8 @@ body{margin:0;background:#f8fafc;padding-bottom:130px}
 <body>
 <div class="container">
 <div class="bento" style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border:0">
-<div style="font-weight:800;font-size:16px">المصرية جروب لإدارة المشروعات</div>
-<div style="font-size:11px;opacity:.7;margin-top:4px"> الطقس مباشر </div>
+<div style="font-weight:800;font-size:16px">المصرية جروب - تقرير زيارة + طقس مباشر</div>
+<div style="font-size:11px;opacity:.7;margin-top:4px">المدينة والمحافظة تلقائي من GPS - الطقس مباشر من الأقمار الصناعية</div>
 <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
 <span id="reportNo" style="background:rgba(255,255,255,.15);padding:5px 10px;border-radius:999px"></span>
 <span id="gpsInfo" style="background:rgba(255,255,255,.15);padding:5px 10px;border-radius:999px">جار تحديد GPS...</span>
@@ -39,21 +39,21 @@ body{margin:0;background:#f8fafc;padding-bottom:130px}
 </div>
 
 <div class="bento">
-<div style="font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px">🌤️ الطقس الحالي <span id="weatherCurrentStatus" style="font-size:10px;background:#f1f5f9;padding:2px 8px;border-radius:999px;color:#0f172a">جار التحميل...</span></div>
+<div style="font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px">🌤️ الطقس المباشر - موقع الزيارة الحالي <span id="weatherCurrentStatus" style="font-size:10px;background:#f1f5f9;padding:2px 8px;border-radius:999px;color:#0f172a">جار التحميل...</span></div>
 <div class="weather-grid" style="margin-top:10px">
 <div class="weather-card live"><span class="badge">موقع الزيارة</span><h4 id="wCurrentLoc">موقعك الحالي</h4><div class="temp" id="wCurrentTemp">--°C</div><div class="meta" id="wCurrentMeta">الرطوبة --% - الرياح -- كم/س</div><div class="meta" style="font-size:9px;margin-top:6px" id="wCurrentTime"></div></div>
 <div class="weather-card"><h4>الرحاب</h4><div class="temp" id="wRehabTemp">--°C</div><div class="meta" id="wRehabMeta">--</div></div>
 <div class="weather-card"><h4>مدينتي</h4><div class="temp" id="wMadinatyTemp">--°C</div><div class="meta" id="wMadinatyMeta">--</div></div>
 <div class="weather-card"><h4>العاصمة الإدارية</h4><div class="temp" id="wCapitalTemp">--°C</div><div class="meta" id="wCapitalMeta">--</div></div>
-<div class="weather-card"><h4>التجمع </h4><div class="temp" id="wTagamoaTemp">--°C</div><div class="meta" id="wTagamoaMeta">--</div></div>
+<div class="weather-card"><h4>التجمع الخامس</h4><div class="temp" id="wTagamoaTemp">--°C</div><div class="meta" id="wTagamoaMeta">--</div></div>
 </div>
 <div style="font-size:9px;color:#94a3b8;margin-top:6px;text-align:center">المصدر: Open-Meteo - تحديث مباشر كل مرة تفتح التقرير</div>
 </div>
 
 <div class="bento"><div style="font-weight:800;font-size:13px;margin-bottom:8px">بيانات الزيارة *</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<input id="site" class="input" placeholder="اكتب اسم الموقع هنا *">
-<input id="mgr" class="input" placeholder="اكتب اسمك هنا *">
+<input id="site" class="input" placeholder="اسم الموقع *">
+<input id="mgr" class="input" placeholder="مدير التشغيل *">
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px">
 <div><div style="font-size:10px;font-weight:700;color:#64748b">المدينة (تلقائي من GPS)</div><div id="cityDisplay" style="font-weight:800;font-size:13px">جار التحديد...</div></div>
