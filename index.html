@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير زيارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Cairo',system-ui}
+body{margin:0;background:#f8fafc;padding-bottom:120px}
+.container{max-width:780px;margin:auto;padding:10px}
+.bento{background:#fff;border-radius:18px;border:1px solid #e2e8f0;padding:14px;margin-bottom:10px}
+.btn{border:0;border-radius:12px;padding:12px;font-weight:800;cursor:pointer}
+.btn-dark{background:#0f172a;color:#fff;width:100%}
+.input{width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px}
+.chip{padding:5px 11px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font-size:11px;font-weight:700;cursor:pointer}
+.chip.active{color:#fff;background:#10b981;border-color:#10b981}
+.thumb{width:68px;height:68px;border-radius:10px;object-fit:cover;border:1px solid #e2e8f0}
+.sticky{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;padding:10px;z-index:9}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="bento" style="background:#0f172a;color:#fff"><div style="font-weight:800">المصرية جروب - تقرير زيارة</div><div id="reportNo" style="font-size:11px;opacity:.7;margin-top:4px"></div><div id="gpsInfo" style="font-size:11px;opacity:.7">جار تحديد الموقع...</div></div>
+<div class="bento"><div style="font-weight:800;font-size:13px;margin-bottom:8px">بيانات الزيارة *</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="site" class="input" placeholder="اسم الموقع *"><input id="mgr" class="input" placeholder="مدير التشغيل *"></div></div>
+<div id="sections"></div>
+<div class="bento"><div style="font-weight:800;font-size:13px">🔧 المعدات - 20 معدة <span id="equipCount"></span></div><div id="equipList"></div></div>
+<div class="bento"><div style="font-weight:800;font-size:13px">🖼️ الصور</div><div id="gallery" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+<div class="bento"><textarea id="extraNotes" class="input" rows="3" placeholder="ملاحظات..."></textarea></div>
+</div>
+<div class="sticky"><div id="status" style="font-size:12px;text-align:center;color:#0ea5e9;font-weight:700;margin-bottom:6px"></div><button class="btn btn-dark" id="sendBtn" onclick="submitAll()">إرسال التقرير الكامل ✅</button></div>
+<input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+<canvas id="c" style="display:none"></canvas>
+<script>
+const EXEC_URL = "https://script.google.com/macros/s/AKfycbwOHd_bMVOt1cWD5r0XiVrBA4ktlwOGr-8GU-7BRWiEEacPVUISlQa2Epfaaal0aSIf/exec";
+const TITLES=["نظافة الأرضيات","تلميع الأرضيات","نظافة السيراميك","نظافة الرخام","نظافة الممرات","نظافة الزوايا","نظافة الحوائط","إزالة خيوط العنكبوت","نظافة النوافذ","نظافة الأبواب والمقابض","نظافة الواجهة","نظافة اللوحات","نظافة دورات المياه","نظافة المراحيض","نظافة الأحواض","نظافة المرايا","نظافة أرضيات وجدران الحمامات","تعطير المكان","نظافة الإطارات","نظافة طفايات الحريق","نظافة سلالم الطوارئ","نظافة الدرابزين","نظافة المصاعد","الإضاءة والتهوية","نظافة مواقف السيارات","نظافة غرف الرابش","فصل النفايات","نظافة حاويات القمامة","ترتيب المكان","حالة الأثاث"];
+const GROUP=[1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,5,5,5,5,5,5];
+const EQUIPS=[{ar:"رايد أون",en:"Ride On"},{ar:"سنجل ديسك",en:"Single Disc"},{ar:"هاي بريشر",en:"High Pressure"},{ar:"ماتور سحب مياه",en:"Vacuum Motor"},{ar:"مكنسة كهربائية",en:"Vacuum Cleaner"},{ar:"مكنسة برميل",en:"Barrel Vacuum"},{ar:"هوفر شفط مياه واتربة",en:"Hoover"},{ar:"تروللي نظافة",en:"Cleaning Trolley"},{ar:"عربة مزدوجة",en:"Double Bucket"},{ar:"ترولي",en:"Trolley"},{ar:"توينتك",en:"Twintec"},{ar:"ماكينة تلميع",en:"Polishing Machine"},{ar:"تلميع سلالم",en:"Stair Polisher"},{ar:"سلالم",en:"Ladders"},{ar:"سلم متحرك",en:"Escalator Cleaner"},{ar:"غسيل سجاد",en:"Carpet Washer"},{ar:"غسيل مفروشات",en:"Upholstery Washer"},{ar:"سكرابر",en:"Scrubber"},{ar:"سويبر",en:"Sweeper"},{ar:"شفط مياه",en:"Water Suction"}];
+
+let reportNo="EG-RPT-"+new Date().toISOString().slice(0,10).replace(/-/g,'')+"-"+Math.floor(Math.random()*9000+1000);
+let checklist=TITLES.map((t,i)=>({id:i+1,title:t,group:GROUP[i],status:null,note:"",photos:[]}));
+let equips=EQUIPS.map((e,i)=>({...e,id:i+1,qty:"",status:null,note:"",photos:[]}));
+let gps={lat:"",lon:"",acc:"",city:"",gov:""};
+let cur=null;
+document.getElementById('reportNo').innerText=reportNo;
+
+function renderSections(){
+  const cont=document.getElementById('sections'); cont.innerHTML="";
+  for(let g=1;g<=5;g++){
+    const items=checklist.filter(c=>c.group==g);
+    const div=document.createElement('div'); div.className="bento";
+    div.innerHTML=`<div style="font-weight:800;font-size:13px;margin-bottom:8px">قسم ${g} - ${items.length} بنود</div><div id="sec${g}"></div>`;
+    cont.appendChild(div);
+    const list=div.querySelector("#sec"+g);
+    items.forEach(it=>{
+      const el=document.createElement('div'); el.className="bento"; el.style.border="1.5px solid "+(it.status?"#10b981":"#f1f5f9");
+      el.innerHTML=`<div style="display:flex;justify-content:space-between"><div style="font-weight:700;font-size:12px">${it.id}. ${it.title}</div><button class="btn" style="background:#f1f5f9;padding:5px 10px;font-size:11px" onclick="openCam('check',${it.id})">📷</button></div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${["ممتاز","يحتاج تحسين","سيئ","غير مقيم"].map(s=>`<button class="chip ${it.status==s?'active':''}" onclick="setStatus(${it.id},'${s}')">${s}</button>`).join('')}</div>
+      <input class="input" style="margin-top:6px" placeholder="ملاحظة" value="${it.note}" oninput="checklist.find(c=>c.id==${it.id}).note=this.value">
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${it.photos.map(p=>`<div style="position:relative"><img src="${p.src}" class="thumb"><button onclick="delP('check',${it.id},'${p.id}')" style="position:absolute;top:-5px;left:-5px;width:18px;height:18px;border-radius:99px;border:0;background:#0f172a;color:#fff">×</button></div>`).join('')}</div>`;
+      list.appendChild(el);
+    });
+  }
+}
+function renderEquips(){
+  const cont=document.getElementById('equipList'); cont.innerHTML="";
+  equips.forEach(eq=>{
+    const el=document.createElement('div'); el.className="bento"; el.style.padding="10px";
+    el.innerHTML=`<div style="display:flex;justify-content:space-between"><div style="font-weight:700;font-size:12px">${eq.ar}</div><div style="display:flex;gap:4px"><input type="number" value="${eq.qty}" oninput="equips.find(e=>e.id==${eq.id}).qty=this.value" style="width:60px" class="input"><button class="btn" style="background:#f1f5f9;padding:5px 8px" onclick="openCam('equip',${eq.id})">📷</button></div></div><div style="display:flex;gap:4px;margin-top:6px">${["ممتازة","صيانة","معطلة","غير محددة"].map(s=>`<button class="chip ${eq.status==s?'active':''}" onclick="setEqStatus(${eq.id},'${s}')">${s}</button>`).join('')}</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${(eq.photos||[]).map(p=>`<div style="position:relative"><img src="${p.src}" class="thumb"><button onclick="delP('equip',${eq.id},'${p.id}')" style="position:absolute;top:-5px;left:-5px;width:18px;height:18px;border-radius:99px;border:0;background:#0f172a;color:#fff">×</button></div>`).join('')}</div>`;
+    cont.appendChild(el);
+  });
+}
+function setStatus(id,s){ checklist.find(c=>c.id==id).status=s; renderSections(); renderGal(); }
+function setEqStatus(id,s){ equips.find(e=>e.id==id).status=s; renderEquips(); }
+function renderGal(){ const all=[...checklist.flatMap(c=>c.photos),...equips.flatMap(e=>e.photos||[])]; document.getElementById('gallery').innerHTML=all.map(p=>`<img src="${p.src}" class="thumb">`).join(''); }
+function openCam(t,id){ cur={t,id}; document.getElementById('fileInput').click(); }
+function compress(dataUrl){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ const canvas=document.getElementById('c'); let w=img.width,h=img.height; if(w>1024){ h=Math.round(h*1024/w); w=1024; } canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h); res(canvas.toDataURL('image/jpeg',0.6)); }; img.src=dataUrl; }); }
+document.getElementById('fileInput').addEventListener('change', async e=>{ const file=e.target.files[0]; if(!file) return; const r=new FileReader(); r.onload=async ev=>{ let src=await compress(ev.target.result); const ph={id:Date.now()+""+Math.random(),src}; if(cur.t=='check'){ checklist.find(c=>c.id==cur.id).photos.push(ph); renderSections(); }else{ equips.find(c=>c.id==cur.id).photos.push(ph); renderEquips(); } renderGal(); }; r.readAsDataURL(file); e.target.value=""; });
+function delP(t,id,pid){ if(t=='check'){ const it=checklist.find(c=>c.id==id); it.photos=it.photos.filter(p=>p.id!=pid); renderSections(); }else{ const it=equips.find(c=>c.id==id); it.photos=it.photos.filter(p=>p.id!=pid); renderEquips(); } renderGal(); }
+(function(){ if(!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(pos=>{ gps.lat=pos.coords.latitude.toFixed(6); gps.lon=pos.coords.longitude.toFixed(6); document.getElementById('gpsInfo').innerText="📍 "+gps.lat+", "+gps.lon; },()=>{ document.getElementById('gpsInfo').innerText="GPS غير متاح"; }, {enableHighAccuracy:true,timeout:10000}); })();
+renderSections(); renderEquips();
+
+async function submitAll(){
+  const site=document.getElementById('site').value.trim();
+  const mgr=document.getElementById('mgr').value.trim();
+  if(!site||!mgr){ alert("اكتب اسم الموقع ومدير التشغيل"); return; }
+  const btn=document.getElementById('sendBtn'); const st=document.getElementById('status');
+  btn.disabled=true; btn.innerText="جاري الإرسال..."; st.innerText="بنبعت على السيرفر...";
+
+  const allPhotos=[...checklist.flatMap(c=>c.photos.map(p=>({dataUrl:p.src,kind:c.title,label:c.title}))),...equips.flatMap(e=>(e.photos||[]).map(p=>({dataUrl:p.src,kind:e.ar,label:e.ar})))];
+
+  const payload={
+    refNo:reportNo, date:new Date().toISOString(), mgr, site,
+    city:gps.city||"", region:gps.gov||"", gov:gps.gov||"", lat:gps.lat, lng:gps.lon, accuracy:gps.acc,
+    mapsUrl: gps.lat?`https://maps.google.com/?q=${gps.lat},${gps.lon}`:"",
+    overall: Math.round(checklist.filter(c=>c.status=="ممتاز").length/30*100),
+    nEx: checklist.filter(c=>c.status=="ممتاز").length,
+    nWarn: checklist.filter(c=>c.status=="يحتاج تحسين").length,
+    nBad: checklist.filter(c=>c.status=="سيئ").length,
+    eqPresent: equips.filter(e=>e.qty && parseInt(e.qty)>0).length,
+    eqMissing: equips.filter(e=>!e.qty || parseInt(e.qty)==0).length,
+    nPhotos: allPhotos.length, rating:5, clientNote: document.getElementById('extraNotes').value,
+    checklist: checklist.map(c=>({label:c.title,status:c.status||"غير مقيم",note:c.note,group:c.group})),
+    equipments: equips.map(e=>({ar:e.ar,en:e.en,count:e.qty||0,avail:e.qty&&parseInt(e.qty)>0?"موجود":"غير موجود",cond:e.status||"غير محددة"})),
+    photos: allPhotos, rawChecklist: checklist, rawEquips: equips
+  };
+
+  try{
+    // الإرسال المباشر لرابطك الثابت - لا يذهب لـ github.io
+    const res = await fetch(EXEC_URL, {method:"POST", body: JSON.stringify(payload), headers: {"Content-Type":"text/plain;charset=utf-8"}});
+    const txt = await res.text();
+    let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error(txt.slice(0,300)); }
+    if(j.success){
+      st.innerText="تم ✅ "+j.reportId; btn.innerText="تم ✅"; alert("✅ تم الحفظ\n"+j.reportId+"\nالصور: "+j.photosCount);
+      reportNo="EG-RPT-"+new Date().toISOString().slice(0,10).replace(/-/g,'')+"-"+Math.floor(Math.random()*9000+1000);
+      document.getElementById('reportNo').innerText=reportNo;
+    }else{ throw new Error(j.error); }
+  }catch(e){
+    st.innerText="فشل: "+e.message;
+    alert("فشل: "+e.message+"\n\nتأكد Deploy = Anyone");
+  }
+  btn.disabled=false; btn.innerText="إرسال التقرير الكامل ✅";
+}
+</script>
+</body>
+</html>
